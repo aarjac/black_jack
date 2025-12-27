@@ -55,8 +55,18 @@ class Dealer():
     def __init__(self):
         self.hand = []
 
-    def hit(self):
-        pass
+    def get_total(self):
+        value_total = 0
+        for card in self.hand:
+            if type(card.value) is int:
+                value_total += card.value
+            else:
+                if (value_total + card.value[1] > 21):
+                    value_total += card.value[0]
+                else:
+                    value_total += card.value[1]
+
+        return value_total
 
 class Player():
 
@@ -65,6 +75,7 @@ class Player():
     def __init__(self, bank_amount = 500):
         self.hand = []
         self.bank_amount = bank_amount
+        self.total = 0
 
     def bet(self):
 
@@ -89,12 +100,36 @@ class Player():
                 print('You must bet a positive value.')
                 print('Try again...\n')
 
-    
+    def get_total(self):
+        value_total = 0
+        for card in self.hand:
+            if type(card.value) is int:
+                value_total += card.value
+            else:
+                if (value_total + card.value[1] > 21):
+                    value_total += card.value[0]
+                else:
+                    value_total += card.value[1]
+
+        return value_total
+
+def display_info(player_or_dealer, hand, full_hand, total):
+    if full_hand == 'Y':
+        print(f'{player_or_dealer} hand:')
+        for card in hand:
+            print(card)
+        print('Total: ' + str(total))
+        print('\n')
+    else:
+        print(f'{player_or_dealer} hand:')
+        print(hand[0])
+        print('Total: ' + str(hand[0].value) + '...')
+        print('\n')
 
 def check_bust(player_total, dealer_total):
     if player_total > 21:
         return 'Dealer'
-    elif dealer_total >21:
+    elif dealer_total > 21:
         return 'Player'
     else:
         return ''
@@ -102,7 +137,7 @@ def check_bust(player_total, dealer_total):
 def check_winner(player_total, dealer_total, black_jack):
     if player_total <= black_jack and dealer_total <= black_jack and player_total > dealer_total:
         return 'Player'
-    elif player_total <= black_jack and dealer_total <= black_jack and dealer_total > player_total:
+    elif player_total <= black_jack and dealer_total <= black_jack and dealer_total >= player_total:
         return 'Dealer'
     elif player_total > black_jack:
         return 'Dealer'
@@ -118,7 +153,7 @@ def main():
     new_deck = Deck()
     black_jack = 21
     acceptable_choices =  ['Y', 'N']
-    player_choice = ''
+    player_hit_choice = ''
     the_dealer = Dealer()
     dealer_total = 0
     player = Player()
@@ -126,106 +161,59 @@ def main():
     winner = ''
 
     print('\nWelcome to the Black Jack Table!\n')
+    print(f'Your initial balance is: ${player.bank_amount}' )
+    new_deck.build_deck()
 
     while game_on == True:
-        new_deck.build_deck()
         new_deck.shuffle()
 
         current_bet = player.bet()
 
         for _ in range(2):
             player.hand.append(new_deck.deal_one())
-        
-        print("Player's Cards: ")
-        for card in player.hand:
-            print(card)
-            if type(card.value) is int:
-                player_total += card.value
-            else:
-                if (player_total + card.value[1] > black_jack):
-                    player_total += card.value[0]
-                else:
-                    player_total += card.value[1]
-        print('Total: ' + str(player_total))
-        print('\n')
+
+        player_total = player.get_total()
+        display_info("Player's", player.hand, 'Y', player_total)
 
         for _ in range(2):
             the_dealer.hand.append(new_deck.deal_one())
 
         #only show one of dealer's cards
-        print("The Dealer's Cards: ")
-        print(the_dealer.hand[0])
-        for card in the_dealer.hand:
-            if type(card.value) is int:
-                dealer_total += card.value
-            else:
-                if (dealer_total + card.value[1] > black_jack):
-                    dealer_total += card.value[0]
-                else:
-                    dealer_total += card.value[1]
-        print('\n')
+        dealer_total = the_dealer.get_total()
+        display_info("Dealer's", the_dealer.hand, 'N', dealer_total)
 
         while player_total < black_jack:
-            while player_choice not in acceptable_choices:
-                player_choice = input('Would you like to hit (Y or N)? ')
+            while player_hit_choice not in acceptable_choices:
+                player_hit_choice = input('Would you like to hit (Y or N)? ')
                 print('\n')
-                player_choice = player_choice.upper()
-                if player_choice == 'Y':
-                    player_total = 0
+                player_hit_choice = player_hit_choice.upper()
+                if player_hit_choice == 'Y':
+                    print('Player hits...')
                     player.hand.append(new_deck.deal_one())
-                    print("Player's Cards: ")
-                    for card in player.hand:
-                        print(card)
-                        if type(card.value) is int:
-                            player_total += card.value
-                        else:
-                            if (player_total + card.value[1] > black_jack):
-                                player_total += card.value[0]
-                            else:
-                                player_total += card.value[1]
-                    print('Total: ' + str(player_total))
-                    print('\n')
-                elif player_choice == 'N':
+                    player_total = player.get_total()
+                    display_info("Player's", player.hand, 'Y', player_total)
+                elif player_hit_choice == 'N':
                     break
                 else: 
                     print('That was not a valid answer. Try again...')
-            if player_choice == 'N':
+            if player_hit_choice == 'N':
                 break
             else:
                 pass
-            player_choice = ''
+           
+            player_hit_choice = ''
         
         winner = check_winner(player_total, dealer_total, black_jack)
 
-        dealer_total = 0
-        print("The Dealer's Cards: ")
-        for card in the_dealer.hand:
-            print(card)
-            if type(card.value) is int:
-                dealer_total += card.value
-            else:
-                if (dealer_total + card.value[1] > black_jack):
-                    dealer_total += card.value[0]
-                else:
-                    dealer_total += card.value[1]
-        print('\n')    
+        dealer_total = the_dealer.get_total()
+        display_info("Dealer's", the_dealer.hand, 'Y', dealer_total)
 
         while dealer_total <= player_total and player_total <= black_jack:
             print('Dealer hits...')
             the_dealer.hand.append(new_deck.deal_one())
-            dealer_total = 0
-            print("The Dealer's Cards: ")
-            for card in the_dealer.hand:
-                print(card)
-                if type(card.value) is int:
-                    dealer_total += card.value
-                else:
-                    if (dealer_total + card.value[1] > black_jack):
-                        dealer_total += card.value[0]
-                    else:
-                        dealer_total += card.value[1]
-            print('Total: ' + str(dealer_total))
-            print('\n')
+            dealer_total = the_dealer.get_total()
+            display_info("Dealer's", the_dealer.hand, 'Y', dealer_total)
+            
             winner = check_winner(player_total, dealer_total, black_jack)
 
             if winner != '':
@@ -239,24 +227,34 @@ def main():
             pass    
 
         print(winner + ' is the winner!')
-        print('Your current balance is: $' + str(player.bank_amount))
+        print('Your balance is: $' + str(player.bank_amount))
+        print('\n')
+        
+        #check to see if player bank is greater than zero
+        if player.bank_amount > 0:
+            while continue_play not in acceptable_choices:
+                continue_play = input('Would you like to continue play (Y or N)? ')
+                continue_play = continue_play.upper()
+                if continue_play not in acceptable_choices:
+                    print('That was not a valid input. Try again...\n')
+                elif continue_play == 'Y':
+                    player_total = 0
+                    dealer_total = 0
+                    new_deck.all_cards.extend(player.hand)
+                    new_deck.all_cards.extend(the_dealer.hand)
+                    player.hand = []
+                    the_dealer.hand = []
+                    continue_play = ''
+                    player_hit_choice = ''
+                    game_on = True
+                    break
+                elif continue_play == 'N':
+                    game_on = False
+                    break
+        else:
+            break
 
-        while continue_play not in acceptable_choices:
-            continue_play = input('Would you like to continue play (Y or N)? ')
-            continue_play = continue_play.upper()
-            if continue_play not in acceptable_choices:
-                print('That was not a valid input. Try again...\n')
-            elif continue_play == 'Y':
-                player_total = 0
-                dealer_total = 0
-                player.hand = []
-                the_dealer.hand = []
-                continue_play = ''
-                game_on = True
-                break
-            elif continue_play == 'N':
-                game_on = False
-                break
+    print('You walked away from the Black Jack Table with: $' + str(player.bank_amount))
 
 if __name__ == '__main__':
     main()
