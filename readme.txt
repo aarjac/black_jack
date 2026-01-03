@@ -27,4 +27,4 @@ possible outcomes:
 
 -card number equals value
 -face cards value 10
-ace value 1 or 11
+-ace value 1 or 11
